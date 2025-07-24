@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>北京主要旅游景点导览</title>
+    
+    <!-- 资源引用 -->
+    <link href="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <link href="https://lf6-cdn-tos.bytecdntp.com/cdn/expire-100-M/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script defer src="https://unpkg.com/alpinejs@3.10.5/dist/cdn.min.js"></script>
+    
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+        }
+        .title-font {
+            font-family: 'Noto Serif SC', serif;
+        }
+        .audio-btn {
+            transition: all 0.3s ease;
+        }
+        .audio-btn:hover {
+            transform: scale(1.05);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .text-shadow {
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 min-h-screen" x-data="attractionApp()">
+    <!-- 页面头部 -->
+    <header class="gradient-bg text-white py-8 px-4">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="title-font text-3xl md:text-4xl font-bold mb-2 text-shadow">🏮 北京主要旅游景点导览</h1>
+            <p class="text-lg opacity-90">走进千年帝都，感受古韵京华魅力</p>
+        </div>
+    </header>
+
+    <!-- 主要内容区域 -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <!-- 景点列表 -->
+        <div class="space-y-4">
+            <template x-for="attraction in attractions" :key="attraction.id">
+                <div class="bg-white rounded-lg shadow-md card-hover overflow-hidden">
+                    <!-- 景点标题栏 -->
+                    <div class="p-6 border-b border-gray-100">
+                        <div class="flex items-center justify-between">
+                            <!-- 景点名称（可点击展开） -->
+                            <div class="flex items-center flex-1 cursor-pointer" 
+                                 @click="toggleDetails(attraction.id)">
+                                <div class="text-2xl mr-3" x-text="attraction.emoji"></div>
+                                <div>
+                                    <h3 class="title-font text-xl font-semibold text-gray-800 mb-1" 
+                                        x-text="attraction.name"></h3>
+                                    <p class="text-sm text-gray-600">
+                                        <i class="fas fa-map-marker-alt mr-1"></i>
+                                        <span x-text="attraction.address"></span>
+                                    </p>
+                                </div>
+                                <i class="fas fa-chevron-down ml-auto transition-transform duration-300"
+                                   :class="attraction.expanded ? 'rotate-180' : ''"></i>
+                            </div>
+                            
+                            <!-- 音频播放按钮 -->
+                            <div class="ml-4" x-show="attraction.audioUrl">
+                                <button @click="toggleAudio(attraction.id)"
+                                        class="audio-btn w-12 h-12 rounded-full flex items-center justify-center text-white shadow-lg"
+                                        :class="currentPlaying === attraction.id ? 'bg-red-500' : 'bg-blue-500'">
+                                    <i class="fas" 
+                                       :class="currentPlaying === attraction.id ? 'fa-pause' : 'fa-play'"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 详细介绍（可展开收缩） -->
+                    <div x-show="attraction.expanded" 
+                         x-transition:enter="transition ease-out duration-300"
+                         x-transition:enter-start="opacity-0 transform -translate-y-2"
+                         x-transition:enter-end="opacity-100 transform translate-y-0"
+                         x-transition:leave="transition ease-in duration-200"
+                         x-transition:leave-start="opacity-100 transform translate-y-0"
+                         x-transition:leave-end="opacity-0 transform -translate-y-2">
+                        
+                        <div class="p-6 bg-gray-50">
+                            <!-- 基本信息 -->
+                            <div class="mb-6">
+                                <div class="flex flex-wrap gap-4 mb-4">
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-clock mr-2 text-blue-500"></i>
+                                        <span x-text="attraction.hours"></span>
+                                    </div>
+                                    <div class="flex items-center text-sm text-gray-600">
+                                        <i class="fas fa-info-circle mr-2 text-green-500"></i>
+                                        <span x-text="attraction.category"></span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 景点亮点 -->
+                            <div class="mb-6">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-star mr-2 text-yellow-500"></i>
+                                    景点亮点
+                                </h4>
+                                <p class="text-gray-700 leading-relaxed" x-text="attraction.highlights"></p>
+                            </div>
+
+                            <!-- 主要特色 -->
+                            <div class="mb-6" x-show="attraction.features.length > 0">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-list-ul mr-2 text-purple-500"></i>
+                                    主要特色
+                                </h4>
+                                <ul class="space-y-2">
+                                    <template x-for="feature in attraction.features">
+                                        <li class="flex items-start">
+                                            <i class="fas fa-chevron-right mr-2 mt-1 text-blue-500 text-xs"></i>
+                                            <span class="text-gray-700" x-text="feature"></span>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+
+                            <!-- 文化价值 -->
+                            <div x-show="attraction.cultural">
+                                <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+                                    <i class="fas fa-graduation-cap mr-2 text-red-500"></i>
+                                    文化价值
+                                </h4>
+                                <p class="text-gray-700 leading-relaxed" x-text="attraction.cultural"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+
+        <!-- 游览建议 -->
+        <div class="mt-12 bg-white rounded-lg shadow-md p-6">
+            <h2 class="title-font text-2xl font-bold text-gray-800 mb-6 flex items-center">
+                <i class="fas fa-lightbulb mr-3 text-yellow-500"></i>
+                游览建议
+            </h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-calendar-alt mr-2 text-blue-500"></i>
+                        最佳旅游时间
+                    </h3>
+                    <ul class="text-gray-700 space-y-1">
+                        <li>• 春季（3-5月）：万物复苏，花香鸟语</li>
+                        <li>• 秋季（9-11月）：天高云淡，红叶满山</li>
+                        <li>• 避开节假日高峰期，选择工作日参观</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-subway mr-2 text-green-500"></i>
+                        交通指南
+                    </h3>
+                    <ul class="text-gray-700 space-y-1">
+                        <li>• 地铁：网络发达，几乎所有景点都有地铁直达</li>
+                        <li>• 公交：市内公交线路密集，方便快捷</li>
+                        <li>• 打车：各大打车软件均可使用</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 页面底部 -->
+    <footer class="bg-gray-800 text-white py-8 px-4 mt-12">
+        <div class="max-w-4xl mx-auto text-center">
+            <p class="text-gray-400">© 2024 北京旅游景点导览 | 基于高德地图数据整理</p>
+            <p class="text-sm text-gray-500 mt-2">具体开放时间和门票价格请以官方最新信息为准</p>
+        </div>
+    </footer>
+
+    <!-- 隐藏的音频元素 -->
+    <audio x-ref="audioPlayer" @ended="audioEnded()" @loadstart="audioLoading()" @canplay="audioReady()"></audio>
+
+    <script>
+        function attractionApp() {
+            return {
+                currentPlaying: null,
+                audioReady: false,
+                
+                attractions: [
+                    {
+                        id: 'gugong',
+                        name: '故宫博物院（紫禁城）',
+                        emoji: '🏯',
+                        address: '景山前街4号',
+                        hours: '8:30-17:00（周一闭馆）',
+                        category: '历史文化瑰宝',
+                        audioUrl: '', // 故宫语音待生成
+                        expanded: false,
+                        highlights: '故宫是明清两代的皇家宫殿，被誉为"世界五大宫之首"。这座宫殿建筑群占地72万平方米，有房屋9999.5间，是世界上现存规模最大、保存最为完整的木质结构古建筑群。',
+                        features: [
+                            '太和殿：紫禁城的心脏，皇帝举行重大典礼的地方',
+                            '乾清宫：明清皇帝的寝宫，"正大光明"匾额就在这里',
+                            '养心殿：清朝后期皇帝的起居之所，慈禧太后垂帘听政的地方',
+                            '御花园：宫廷园林艺术的典范，古树参天，奇石林立'
+                        ],
+                        cultural: '故宫不仅是建筑艺术的杰作，更是中华文明的象征。这里收藏着180多万件珍贵文物，从商周青铜器到明清瓷器，从古代字画到宫廷用品，每一件都承载着深厚的历史文化内涵。'
+                    },
+                    {
+                        id: 'tiananmen',
+                        name: '天安门广场',
+                        emoji: '🏮',
+                        address: '东长安街',
+                        hours: '全天开放',
+                        category: '历史文化瑰宝',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163044-kqfftYNI.mp3?Expires=1753432244&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=B11IZ2930pXHFasu9D7T6UqkJaI%3D',
+                        expanded: false,
+                        highlights: '天安门广场是世界上最大的城市广场，面积达44万平方米，可容纳100万人举行盛大集会。这里是新中国的象征，见证了无数历史时刻。',
+                        features: [
+                            '天安门城楼：新中国成立的见证地，毛主席宣布新中国成立的地方',
+                            '人民英雄纪念碑：缅怀革命先烈的神圣之地',
+                            '毛主席纪念堂：瞻仰伟人风采的庄严场所',
+                            '国旗护卫队升降旗仪式：每日准时进行的庄严仪式'
+                        ],
+                        cultural: '天安门广场承载着新中国的历史记忆，是中华民族从站起来、富起来到强起来伟大历程的见证地。'
+                    },
+                    {
+                        id: 'tiantan',
+                        name: '天坛公园',
+                        emoji: '⛩️',
+                        address: '天坛东里甲1号',
+                        hours: '6:00-22:00',
+                        category: '历史文化瑰宝',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163050-DiOtzbuo.mp3?Expires=1753432250&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=nZmsT6MBrcTC4D%2BtdgI0lrXvQ7U%3D',
+                        expanded: false,
+                        highlights: '天坛是明清皇帝祭祀皇天上帝的场所，被誉为"天人合一"思想的完美体现。其建筑设计巧妙地运用了声学、数学和哲学原理。',
+                        features: [
+                            '祈年殿：三重檐圆形大殿，不用一根钉子建成',
+                            '回音壁：声学奇观，可传递悄悄话',
+                            '圜丘坛：皇帝祭天的神圣之地',
+                            '斋宫：皇帝祭祀前斋戒的地方'
+                        ],
+                        cultural: '天坛的设计处处体现着古代中国"天圆地方"的宇宙观念，建筑比例严格按照易经八卦原理设计，是中国古代建筑艺术的巅峰之作。'
+                    },
+                    {
+                        id: 'yiheyuan',
+                        name: '颐和园',
+                        emoji: '🦢',
+                        address: '新建宫门路19号',
+                        hours: '6:30-18:00',
+                        category: '皇家园林胜境',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163056-QnPEQoTC.mp3?Expires=1753432256&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=QCbm%2B0Ahxp92tHkbDwQvKNDh62E%3D',
+                        expanded: false,
+                        highlights: '颐和园是中国现存规模最大、保存最完整的皇家园林，被誉为"皇家园林博物馆"。园内山水相间，建筑精美，是园林艺术的杰作。',
+                        features: [
+                            '万寿山：园内制高点，佛香阁矗立山顶',
+                            '昆明湖：占园区四分之三，波光潇影美如画',
+                            '长廊：世界最长的画廊，728米，有彩画14000多幅',
+                            '清晏舫（石舫）：慈禧太后的水上行宫'
+                        ],
+                        cultural: '颐和园巧妙地借用了西山群峰和玉泉山塔作为背景，形成了"虽由人作，宛自天开"的艺术效果。园内建筑风格多样，既有汉族传统建筑，又有藏式、蒙古式建筑。'
+                    },
+                    {
+                        id: 'yuanmingyuan',
+                        name: '圆明园遗址公园',
+                        emoji: '🏛️',
+                        address: '清华西路28号',
+                        hours: '7:00-19:00',
+                        category: '皇家园林胜境',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163102-hYdFGtVU.mp3?Expires=1753432262&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=K7P3TzogfwOY6BBEhtAZWQKGLWA%3D',
+                        expanded: false,
+                        highlights: '圆明园被誉为"万园之园"，虽然现在只剩下残垣断壁，但仍能让人感受到昔日的辉煌。这里不仅是园林艺术的瑰宝，更是爱国主义教育的重要基地。',
+                        features: [
+                            '大水法遗址：欧式喷泉建筑群遗存',
+                            '海晏堂遗址：十二生肖铜首的原址',
+                            '方壶胜境：仙山琼阁的遗迹',
+                            '福海景区：当年的"人工海洋"'
+                        ],
+                        cultural: '圆明园的毁灭是中华民族的巨大损失，但这些遗址时刻提醒我们"勿忘国耻，振兴中华"的历史使命。'
+                    },
+                    {
+                        id: 'badaling',
+                        name: '八达岭长城',
+                        emoji: '🏮',
+                        address: '延庆区G6京藏高速58号出口',
+                        hours: '6:30-19:00',
+                        category: '万里长城壮观',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163108-cSJQfGRJ.mp3?Expires=1753432268&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=FhkUX%2BC8%2FVaR8r12hyE18Ra7rvo%3D',
+                        expanded: false,
+                        highlights: '八达岭长城是明长城的精华段，也是万里长城的杰出代表。"不到长城非好汉"，这里是体验长城雄伟壮观的最佳地点。',
+                        features: [
+                            '城墙设计：平均高度7.8米，顶宽5.8米，可并行五马',
+                            '烽火台：古代军事通讯系统的重要组成部分',
+                            '关隘布局：一夫当关，万夫莫开的险要地势',
+                            '石材工艺：条石与城砖的完美结合'
+                        ],
+                        cultural: '长城是中华民族勤劳智慧的结晶，也是人类历史上最伟大的建筑工程之一，象征着中华民族坚韧不拔的精神。'
+                    },
+                    {
+                        id: 'wangfujing',
+                        name: '王府井步行街',
+                        emoji: '🏮',
+                        address: '王府井大街256号',
+                        hours: '全天开放',
+                        category: '传统文化街区',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163114-bfUGyBat.mp3?Expires=1753432274&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=XOvMQXlESO1NCzkquSr85Q8kNkA%3D',
+                        expanded: false,
+                        highlights: '王府井是北京最著名的商业街，有着700多年的历史。这里既有现代化的购物中心，又保留着传统的老字号店铺。',
+                        features: [
+                            '王府井小吃街：汇聚全国各地特色小吃',
+                            '老字号美食：全聚德烤鸭、东来顺涮羊肉',
+                            '传统糖果：稻香村的京式糕点',
+                            '特色饮品：老北京酸梅汤、豆汁'
+                        ],
+                        cultural: '王府井见证了北京商业文化的发展变迁，是传统与现代完美融合的典型代表。'
+                    },
+                    {
+                        id: 'nanluoguxiang',
+                        name: '南锣鼓巷',
+                        emoji: '🏘️',
+                        address: '交道口街道南大街',
+                        hours: '全天开放',
+                        category: '传统文化街区',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163118-rLhIZFkP.mp3?Expires=1753432278&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=JTu6jVhs0PKQiKg4gVeZDsJ4OG8%3D',
+                        expanded: false,
+                        highlights: '南锣鼓巷是北京最古老的街区之一，至今已有740多年的历史。这里完整保存着元代胡同院落的传统风貌。',
+                        features: [
+                            '四合院建筑：体验老北京的居住文化',
+                            '文创小店：个性化的手工艺品和纪念品',
+                            '特色咖啡馆：传统与现代结合的休闲空间',
+                            '胡同游：三轮车游览体验老北京生活'
+                        ],
+                        cultural: '南锣鼓巷是了解北京胡同文化的重要窗口，展现了老北京的历史韵味和现代活力的完美结合。'
+                    },
+                    {
+                        id: 'zoo',
+                        name: '北京动物园',
+                        emoji: '🦁',
+                        address: '西直门外大街137号',
+                        hours: '7:30-18:00',
+                        category: '休闲娱乐天地',
+                        audioUrl: 'https://minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com/audio%2Ftts-20250724163123-DPBLBxsI.mp3?Expires=1753432283&OSSAccessKeyId=LTAI5tGLnRTkBjLuYPjNcKQ8&Signature=DV4%2F0%2FNCqJMg0xGoICswWDGzhNI%3D',
+                        expanded: false,
+                        highlights: '北京动物园是中国最大的动物园之一，拥有450多种动物，其中以大熊猫最为著名。',
+                        features: [
+                            '大熊猫馆：国宝大熊猫的温馨家园',
+                            '金丝猴：中国特有的珍稀灵长类动物',
+                            '东北虎：威武雄壮的森林之王',
+                            '长颈鹿：优雅的非洲巨人'
+                        ],
+                        cultural: '北京动物园不仅是动物们的快乐家园，更是科普教育的重要基地，培养人们爱护动物、保护环境的意识。'
+                    }
+                ],
+
+                // 切换详细信息显示
+                toggleDetails(attractionId) {
+                    const attraction = this.attractions.find(a => a.id === attractionId);
+                    if (attraction) {
+                        attraction.expanded = !attraction.expanded;
+                    }
+                },
+
+                // 音频播放控制
+                toggleAudio(attractionId) {
+                    const attraction = this.attractions.find(a => a.id === attractionId);
+                    if (!attraction || !attraction.audioUrl) return;
+
+                    const audio = this.$refs.audioPlayer;
+
+                    // 如果当前正在播放相同音频，则暂停/继续
+                    if (this.currentPlaying === attractionId) {
+                        if (audio.paused) {
+                            audio.play();
+                        } else {
+                            audio.pause();
+                            this.currentPlaying = null;
+                        }
+                    } else {
+                        // 播放新音频
+                        audio.src = attraction.audioUrl;
+                        audio.play();
+                        this.currentPlaying = attractionId;
+                    }
+                },
+
+                // 音频播放结束
+                audioEnded() {
+                    this.currentPlaying = null;
+                },
+
+                // 音频加载开始
+                audioLoading() {
+                    this.audioReady = false;
+                },
+
+                // 音频准备就绪
+                audioReady() {
+                    this.audioReady = true;
+                }
+            }
+        }
+    </script>
+</body>
+</html> 
